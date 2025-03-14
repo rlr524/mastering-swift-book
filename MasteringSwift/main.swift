@@ -2,100 +2,81 @@
 //  main.swift
 //  MasteringSwift
 //
-//  Created by Rob Ranf on 3/3/25.
+//  Created by Rob Ranf on 3/13/25.
 //
 
 import Foundation
 
-// Custom subscripts
-class BandMembers {
-    private var names = ["Jisoo", "Rosé", "Jennie", "Lisa"]
-    subscript(index: Int) -> String {
-        get {
-            return names[index]
+// Property observers
+struct myStruct {
+    var myProp: String {
+        willSet(newName) {
+            print("Preparing to change the value of myProp from \(myProp) to \(newName)")
         }
-        set {
-            names[index] = newValue
-        }
-    }
-}
-
-var blinks = BandMembers()
-print(blinks[0])
-
-// Read only custom subscripts - Don't declare a setter or a getter, or just declare a getter
-class Pastas {
-    private var names = ["Ravioli", "Spaghetti", "Lasagne"]
-    subscript(index: Int) -> String {
-        names[index]
-    }
-}
-
-// Calculated subscripts
-struct MathTable {
-    var num: Int
-    subscript(index: Int) -> Int {
-        return num * index
-    }
-}
-
-var myMathTable = MathTable(num: 18)
-print(myMathTable[4])
-
-// Static subscripts
-struct Hello {
-    static subscript (name: String) -> String {
-        return "Hello \(name)"
-    }
-}
-
-let greeting = Hello["Madison"]
-print(greeting)
-
-// External names for subscripts
-struct MathTableNew {
-    var num: Int
-    subscript(multiply index: Int) -> Int {
-        return num * index
-    }
-    subscript(add index: Int) -> Int {
-        return num + index
-    }
-}
-
-var myMathTableNew = MathTableNew(num: 18)
-print(myMathTableNew[multiply: 5])
-print(myMathTableNew[add: 5])
-
-// Multidimensional subscripts
-struct TicTacToe {
-    var board = [["-","-","-"],["-","-","-"],["-","-","-"]]
-    subscript(x: Int, y: Int) -> String {
-        get {
-            return board[x][y]
-        }
-        set {
-            board[x][y] = newValue
-        }
-    }
-
-    func printBoard() {
-        for plane in board {
-            for row in plane {
-                for element in row {
-                    print(element, terminator: " ")
-                }
+        didSet {
+            if oldValue != myProp {
+                print("The value of myProp changed from \(oldValue) to \(myProp)")
             }
-            print()
         }
     }
 }
 
+var thing = myStruct(myProp: "OriginalProp")
+thing.myProp = "NewProp"
 
-var board = TicTacToe()
-board[1,1] = "x"
-board[0,0] = "o"
-board[2,0] = "o"
-board[1,0] = "x"
-board[1,2] = "o"
-board.printBoard()
+struct Product {
+    var name: String
+    var price: Double
+    var stockLevel: Int {
+        didSet {
+            if stockLevel < minimumStockLevel {
+                print("Stock level of \(stockLevel) is below minimum for \(name)")
+                reorderNotification()
+            }
+        }
+    }
+
+    var minimumStockLevel: Int
+    init(name: String, price: Double, stockLevel: Int, minimumStockLevel: Int) {
+        self.name = name
+        self.price = price
+        self.stockLevel = stockLevel
+        self.minimumStockLevel = minimumStockLevel
+    }
+
+    mutating func sell(units: Int) {
+        print("Selling \(units) units of \(name) ")
+        stockLevel -= units
+    }
+
+    func reorderNotification() {
+        print("Current stock of \(name) is \(stockLevel). Time to reorder.")
+    }
+}
+
+var apple = Product(name: "apple", price: 0.99, stockLevel: 100, minimumStockLevel: 95)
+apple.sell(units: 10)
+
+// Property wrappers
+// Use generics to allow the wrapper to be used with any data type
+@propertyWrapper
+struct MyPropertyWrapper<T> {
+    private var value: T
+    var wrappedValue: T {
+        get { return value }
+        set { /* set the value */ }
+    }
+    init(wrappedvalue initialValue: T) {
+        self.value = initialValue
+    }
+}
+
+@propertyWrapper
+struct Capitalized {
+    private var value: String = ""
+
+    var wrappedValue: String {
+        get { value }
+        set { value = newValue.capitalized}
+    }
+}
