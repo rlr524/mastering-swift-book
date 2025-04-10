@@ -2,128 +2,124 @@
 //  main.swift
 //  MasteringSwift
 //
-//  Created by Rob Ranf on 4/7/25.
+//  Created by Rob Ranf on 4/9/25.
 //
 
 import Foundation
+// Memory management
 
-/*
-// Concurrency with async operations
-// Data race conditions and Swift 6
-var count = 0
-let queue = DispatchQueue.global()
-
-func incrementCount() {
-    for _ in 0..<1000 {
-        queue.async {
-            count += 1
-            print(count)
-        }
+class MyClass {
+    var name = ""
+    init(name: String) {
+        self.name = name
+        print("Initializing class with name \(self.name)")
+    }
+    deinit {
+        print("Releasing class with name \(self.name)")
     }
 }
 
-incrementCount()
-print("Final: \(count)")
+//var classOneRef: MyClass? = MyClass(name: "One")
+//var classTwoRef: MyClass? = MyClass(name: "Two")
+//var classTwoRef2: MyClass? = classTwoRef
+//print("Setting classOneRef to nil")
+//classOneRef = nil
+//print("Setting classTwoRef to nil")
+//classTwoRef = nil
+//print("Setting classTwoRef2 to nil")
+//classTwoRef2 = nil
 
-var newCount = 0
-func newIncrementalCount() {
-    for _ in 0..<1000 {
-        newCount += 1
-        print(newCount)
+class MyClassOne_Strong {
+    var name = ""
+    var class2: MyClassTwo_Strong?
+    init(name: String) {
+        self.name = name
+        print("Initializing classOne_Strong with name \(self.name)")
+    }
+    deinit {
+        print("Releasing classOne_String with name \(self.name)")
+    }
+}
+
+class MyClassTwo_Strong {
+    var name = ""
+    var class1: MyClassOne_Strong?
+    
+    init(name: String) {
+        self.name = name
+        print("Init classOne_Strong with name \(self.name)")
+    }
+    deinit {
+        print("Release classOne_Strong with name \(self.name)")
     }
 }
 
 
-print("Starting new count...")
-newIncrementalCount()
-print("Final: \(newCount)")
-*/
+var class1: MyClassOne_Strong? = MyClassOne_Strong(name: "ClassOne_Strong")
+var class2: MyClassTwo_Strong? = MyClassTwo_Strong(name: "ClassTwo_Strong")
+class1?.class2 = class2
+class2?.class1 = class1
+print("Setting classes to nil")
+class2 = nil
+class1 = nil
 
-// Async and await
-//func retrieveData() async -> String {
-//    print("Retrieving data")
-//    try! await Task.sleep(nanoseconds: 2_000_000_000)
-//    return "Data retrieved!"
-//}
-//
-//func loadContent() async {
-//    let data = await retrieveData()
-//    print("Data: \(data)")
-//}
-//
-//await loadContent()
 
-func retrieveUserData() async -> String {
-    print("Retrieving user data...")
-    try! await Task.sleep(nanoseconds: 2_000_000_000)
-    return "User data retrieved"
-}
-
-//func retrieveImageData() async -> String {
-//    print("Retrieving image data...")
-//    try! await Task.sleep(nanoseconds: 4_000_000_000)
-//    return "Image data retrieved"
-//}
-//
-//async let userData = retrieveUserData()
-//async let imageData = retrieveImageData()
-//let results = await(userData, imageData)
-//print("User data: \(results.0) Image Data: \(results.1)")
-
-let task = Task {
-    let data = await retrieveUserData()
-    print("Data from detached task: \(data)")
-}
-
-await task.value
-
-// Actors
-actor BankAccount {
-    private var balance: Double
-    private var transactions = [Transaction]()
-    
-    init(balance: Double) {
-        self.balance = balance
+class MyClass1_Unowned {
+    var name = ""
+    unowned let class2b: MyClass2_Unowned
+    init(name: String, class2b: MyClass2_Unowned) {
+        self.name = name
+        self.class2b = class2b
+        print("Initializing class1_Unowned with name \(self.name)")
     }
-    
-    func deposit(amount: Double) {
-        balance += amount
-    }
-    
-    func withdraw(amount: Double) -> Bool {
-        if balance >= amount {
-            balance -= amount
-            return true
-        } else {
-            return false
-        }
-    }
-    
-    func getBalance() -> Double {
-        return balance
-    }
-    
-    func addTransaction(_ transaction: Transaction) {
-        transactions.append(transaction)
-    }
-    
-    func showTransactions() -> [Transaction] {
-        return transactions
+    deinit {
+        print("Releasing class1_Unowned with name \(self.name)")
     }
 }
 
-let account = BankAccount(balance: 5000.00)
-let _ = await account.withdraw(amount: 100.00)
-print("New balance \(await account.getBalance())")
-
-struct Transaction: Sendable {
-    let id: Int
-    let amount: Double
-    let description: String
+class MyClass2_Unowned {
+    var name = ""
+    var class1b: MyClass1_Unowned?
+    init(name: String) {
+        self.name = name
+        print("Initializing class2_Unowned with name \(self.name)")
+    }
+    deinit {
+        print("Releasing class2_Unowned with name \(self.name)")
+    }
 }
 
-let transaction = Transaction(id: 10001, amount: 100.00, description: "A transaction")
-let newAccount = BankAccount(balance: 1000.00)
-let _ = await newAccount.addTransaction(transaction)
-let audit = await newAccount.showTransactions()
-print(audit)
+let class2b = MyClass2_Unowned(name: "Class2_Unowned")
+let class1b: MyClass1_Unowned? = MyClass1_Unowned(name: "class1_Unowned",class2b: class2b)
+class2b.class1b = class1b
+print("Classes going out of scope")
+
+
+class MyClass1_Weak {
+    var name = ""
+    var class2c: MyClass2_Weak?
+    init(name: String) {
+        self.name = name
+        print("Initializing class1_Weak with name \(self.name)")
+    }
+    deinit {
+        print("Releasing class1_Weak with name \(self.name)")
+    }
+}
+class MyClass2_Weak {
+    var name = ""
+    weak var class1c: MyClass1_Weak?
+    init(name: String) {
+        self.name = name
+        print("Initializing class2_Weak with name \(self.name)")
+    }
+    deinit {
+        print("Releasing class2_Weak with name \(self.name)")
+    }
+}
+
+let class1c: MyClass1_Weak? = MyClass1_Weak(name: "Class1_Weak")
+let class2c: MyClass2_Weak? = MyClass2_Weak(name: "Class2_Weak")
+class1c?.class2c = class2c
+class2c?.class1c = class1c
+print("Classes going out of scope")
